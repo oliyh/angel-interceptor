@@ -6,11 +6,16 @@ Express relations between Pedestal interceptors and decouple the scope of interc
 (require '[angel.interceptor :as angel]
          '[io.pedestal.http :as bootstrap])
 
-(angel/satisfy
-  {::bootstrap/routes
-    ["/api" ^:interceptors [(angel/requires rate-limiter :account)]
-      ["/slack" ^:interceptors [(angel/provides slack-auth :account)] ...]
-      ["/hipchat" ^:interceptors [(angel/provides hipchat-auth :account)] ...]]})
+(def service
+  (->
+    {::bootstrap/routes
+
+      ["/api" ^:interceptors [(angel/requires rate-limiter :account)]
+        ["/slack" ^:interceptors [(angel/provides slack-auth :account)] ...]
+        ["/hipchat" ^:interceptors [(angel/provides hipchat-auth :account)] ...]]}
+
+    bootstrap/default-interceptors
+    angel/satisfy))
 ```
 
 `rate-limiter` will run *after* `slack-auth` or `hipchat-auth` but still run *before* the handler.
