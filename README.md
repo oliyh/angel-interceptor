@@ -2,7 +2,7 @@
 
 Express relations between Pedestal interceptors - decouple the declaration of interceptors on route definitions from execution order.
 
-```
+```clojure
 (require '[angel.interceptor :as ai])
 
 ["/api" ^:interceptors [(ai/interceptor rate-limiter
@@ -28,7 +28,7 @@ Angel Interceptor allows you to express relations between interceptors to gain m
 Imagine you are building an API for integration with multiple chat services.
 You would naturally put `slack-auth` and `hipchat-auth` as interceptors on the appropriate route branches, as below.
 
-```
+```clojure
 ["/api" ^:interceptors [rate-limiter]
   ["/slack" ^:interceptors [slack-auth] ...]
   ["/hipchat" ^:interceptors [hipchat-auth] ...]]
@@ -42,7 +42,7 @@ The problem here is that in Pedestal the `rate-limiter` interceptor will run *be
 
 Angel Interceptor allows you to express relations between interceptors to allow you to solve this problem.
 
-```
+```clojure
 (require '[angel.interceptor :as ai])
 
 ["/api" ^:interceptors [(ai/interceptor rate-limiter
