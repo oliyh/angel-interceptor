@@ -5,16 +5,6 @@ Express relations between Pedestal interceptors - decouple the declaration of in
 ```
 (require '[angel.interceptor :as ai])
 
-(def rate-limiter
-  {:before (fn [{:keys [account-id]}]
-               ... terminate requests where account has exceeded limit ... )})
-
-(def slack-auth
-  {:before (fn [ctx] (assoc ctx :account-id (slack/lookup-account ctx)))})
-
-(def hipchat-auth
-  {:before (fn [ctx] (assoc ctx :account-id (hipchat/lookup-account ctx)))})
-
 ["/api" ^:interceptors [(ai/interceptor rate-limiter
                                         :requires [:account])]
   ["/slack" ^:interceptors [(ai/interceptor slack-auth
