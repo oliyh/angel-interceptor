@@ -3,11 +3,14 @@
 Express relations between Pedestal interceptors and decouple the scope of interceptors from execution order.
 
 ```clojure
-(require '[angel.interceptor :as angel])
+(require '[angel.interceptor :as angel]
+         '[io.pedestal.http :as bootstrap])
 
-["/api" ^:interceptors [(angel/requires rate-limiter :account)]
-  ["/slack" ^:interceptors [(angel/provides slack-auth :account)] ...]
-  ["/hipchat" ^:interceptors [(angel/provides hipchat-auth :account)] ...]]
+(angel/satisfy
+  {::bootstrap/routes
+    ["/api" ^:interceptors [(angel/requires rate-limiter :account)]
+      ["/slack" ^:interceptors [(angel/provides slack-auth :account)] ...]
+      ["/hipchat" ^:interceptors [(angel/provides hipchat-auth :account)] ...]]})
 ```
 
 `rate-limiter` will run *after* `slack-auth` or `hipchat-auth` but still run *before* the handler.
@@ -40,12 +43,22 @@ In Pedestal the `rate-limiter` interceptor will run *before* the `slack-auth` or
 ```clojure
 (require '[angel.interceptor :as angel])
 
-["/api" ^:interceptors [(angel/requires rate-limiter :account)]
-  ["/slack" ^:interceptors [(angel/provides slack-auth :account)] ...]
-  ["/hipchat" ^:interceptors [(angel/provides hipchat-auth :account)] ...]]
+(def routes
+  ["/api" ^:interceptors [(angel/requires rate-limiter :account)]
+    ["/slack" ^:interceptors [(angel/provides slack-auth :account)] ...]
+    ["/hipchat" ^:interceptors [(angel/provides hipchat-auth :account)] ...]])
 ```
 
 **Angel Interceptor** will then reorder your interceptors such that `rate-limiter` will run immediately after `slack-auth` or `hipchat-auth`.
+To do this, simply run `angel/satisfy` over the service map:
+
+```clojure
+(require '[io.pedestal.http :as bootstrap])
+
+(def service
+  (angel/satisfy
+    {::bootstrap/routes routes}))
+```
 
 ## Bugs
 
