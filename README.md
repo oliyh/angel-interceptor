@@ -1,6 +1,29 @@
 # angel-interceptor
 
-Express relations between Pedestal interceptors
+Express relations between Pedestal interceptors - decouple the declaration of interceptors on route definitions from execution order.
+
+```
+(require '[angel.interceptor :as ai])
+
+(def rate-limiter
+  {:before (fn [{:keys [account-id]}]
+               ... terminate requests where account has exceeded limit ... )})
+
+(def slack-auth
+  {:before (fn [ctx] (assoc ctx :account-id (slack/lookup-account ctx)))})
+
+(def hipchat-auth
+  {:before (fn [ctx] (assoc ctx :account-id (hipchat/lookup-account ctx)))})
+
+["/api" ^:interceptors [(ai/interceptor rate-limiter
+                                        :requires [:account])]
+  ["/slack" ^:interceptors [(ai/interceptor slack-auth
+                                            :provides [:account])] ...]
+  ["/hipchat" ^:interceptors [(ai/interceptor hipchat-auth
+                                              :provides [:account])] ...]]
+```
+
+`rate-limiter` will run *after* `slack-auth` or `hipchat-auth` but still run *before* the handler.
 
 ## Introduction
 
@@ -10,29 +33,29 @@ those defined at the service level and progressing on through those defined at r
 This can prevent reusable interceptors or require repetition, or require injection of interceptors at run time.
 Angel Interceptor allows you to express relations between interceptors to gain maximum reuse without repetition.
 
-## Examples
+## Explanation
 
 Imagine you are building an API for integration with multiple chat services.
 You would naturally put `slack-auth` and `hipchat-auth` as interceptors on the appropriate route branches, as below.
 
 ```
-["/api" ^:interceptors [increment-api-hits]
+["/api" ^:interceptors [rate-limiter]
   ["/slack" ^:interceptors [slack-auth] ...]
   ["/hipchat" ^:interceptors [hipchat-auth] ...]]
 ```
 
-You want to record how many times each account is using your API, so you add an interceptor to do this - `increment-api-hits` applies to all routes in the API.
-This interceptor requires an `account-id` so it can increment the stats for the appropriate account.
-You want to run it *before* the handler so that regardless of the outcome (success, failure, exception) you have recorded the hit.
+You want to limit the number of times each account can use your API, so you add an interceptor to do this - `rate-limiter` - which applies to all routes in the API.
+This interceptor requires an `account-id` so it can work out how many times it has already been accessed to decide whether to reject the request or not.
+You want to run it *before* the handler so that you don't needlessly perform mutating or expensive operations.
 
-The problem here is that in Pedestal the `increment-api-hits` interceptor will run *before* the `slack-auth` or `hipchat-auth` interceptors, so the account-id will not be available.
+The problem here is that in Pedestal the `rate-limiter` interceptor will run *before* the `slack-auth` or `hipchat-auth` interceptors, so the account-id will not be available.
 
 Angel Interceptor allows you to express relations between interceptors to allow you to solve this problem.
 
 ```
 (require '[angel.interceptor :as ai])
 
-["/api" ^:interceptors [(ai/interceptor increment-api-hits
+["/api" ^:interceptors [(ai/interceptor rate-limiter
                                         :requires [:account])]
   ["/slack" ^:interceptors [(ai/interceptor slack-auth
                                             :provides [:account])] ...]
@@ -40,7 +63,7 @@ Angel Interceptor allows you to express relations between interceptors to allow 
                                               :provides [:account])] ...]]
 ```
 
-Angel Interceptor will then reorder your interceptors such that `increment-api-hits` will run immediately after `slack-auth` or `hipchat-auth`.
+Angel Interceptor will then reorder your interceptors such that `rate-limiter` will run immediately after `slack-auth` or `hipchat-auth`.
 
 ## Bugs
 
