@@ -3,11 +3,11 @@
 Express relations between Pedestal interceptors and decouple the scope of interceptors from execution order.
 
 ```clojure
-(require '[angel.interceptor :as ai])
+(require '[angel.interceptor :as angel])
 
-["/api" ^:interceptors [(ai/interceptor rate-limiter :requires [:account])]
-  ["/slack" ^:interceptors [(ai/interceptor slack-auth :provides [:account])] ...]
-  ["/hipchat" ^:interceptors [(ai/interceptor hipchat-auth :provides [:account])] ...]]
+["/api" ^:interceptors [(angel/requires rate-limiter :account)]
+  ["/slack" ^:interceptors [(angel/provides slack-auth :account)] ...]
+  ["/hipchat" ^:interceptors [(angel/provides hipchat-auth :account)] ...]]
 ```
 
 `rate-limiter` will run *after* `slack-auth` or `hipchat-auth` but still run *before* the handler.
@@ -17,7 +17,7 @@ Express relations between Pedestal interceptors and decouple the scope of interc
 Pedestal interceptors are applied sequentially in the order in which they are specified, starting with
 those defined at the service level and progressing on through those defined at route branch and finally route leaf level.
 
-_Angel Interceptor_ allows you to express relations between interceptors to gain maximum reuse without repetition.
+**Angel Interceptor** allows you to express relations between interceptors to gain maximum reuse without repetition.
 
 ## Use case
 
@@ -35,17 +35,17 @@ It requires an `account-id` to see if the account has exceeded its limit and run
 
 In Pedestal the `rate-limiter` interceptor will run *before* the `slack-auth` or `hipchat-auth` interceptors, so the `account-id` will not be available.
 
-_Angel Interceptor_ allows you to express a _provides_ and _requires_ relation between interceptors:
+**Angel Interceptor** allows you to express a _provides_ and _requires_ relation between interceptors:
 
 ```clojure
-(require '[angel.interceptor :as ai])
+(require '[angel.interceptor :as angel])
 
-["/api" ^:interceptors [(ai/interceptor rate-limiter :requires [:account])]
-  ["/slack" ^:interceptors [(ai/interceptor slack-auth :provides [:account])] ...]
-  ["/hipchat" ^:interceptors [(ai/interceptor hipchat-auth :provides [:account])] ...]]
+["/api" ^:interceptors [(angel/requires rate-limiter :account)]
+  ["/slack" ^:interceptors [(angel/provides slack-auth :account)] ...]
+  ["/hipchat" ^:interceptors [(angel/provides hipchat-auth :account)] ...]]
 ```
 
-_Angel Interceptor_ will then reorder your interceptors such that `rate-limiter` will run immediately after `slack-auth` or `hipchat-auth`.
+**Angel Interceptor** will then reorder your interceptors such that `rate-limiter` will run immediately after `slack-auth` or `hipchat-auth`.
 
 ## Bugs
 
