@@ -2,7 +2,8 @@
   (:require [clojure.test :refer :all]
             [angel.interceptor :as angel]
             [io.pedestal.interceptor :as pedestal-interceptor]
-            [io.pedestal.interceptor.helpers :refer [before]]))
+            [io.pedestal.interceptor.helpers :refer [before]]
+            [io.pedestal.http.route.definition :refer [defroutes]]))
 
 (defn- something [_] nil)
 (def ^:private some-interceptor (before ::some-interceptor something))
@@ -39,7 +40,7 @@
       (is (= service-map
              (angel/satisfy service-map)))))
 
-  (testing "reorders interceptors to put requires after the appropriate requires"
+  (testing "reorders interceptors to put requires after the appropriate provides"
     (let [first-interceptor (angel/provides some-interceptor :something)
           second-interceptor (angel/requires another-interceptor :something)]
 
@@ -60,7 +61,7 @@
           third-interceptor (angel/requires yet-another-interceptor :something :another-thing)]
 
       (is (= {:io.pedestal.http/interceptors [first-interceptor second-interceptor third-interceptor]}
-             (angel/satisfy {:io.pedestal.http/interceptors [second-interceptor third-interceptor first-interceptor]})))))
+             (angel/satisfy {:io.pedestal.http/interceptors [first-interceptor third-interceptor second-interceptor]})))))
 
   (testing "deals with repeated dependencies"
     (let [first-interceptor (angel/provides some-interceptor :something)
@@ -92,3 +93,23 @@
                (is (thrown-with-msg?
                     Exception #"Requires/provides loop between \[:angel.interceptor-test/some-interceptor :angel.interceptor-test/another-interceptor\]"
                     (angel/satisfy {:io.pedestal.http/interceptors [second-interceptor first-interceptor]})))))))
+
+
+(def first-interceptor (angel/provides another-interceptor :another-thing))
+(def second-interceptor (angel/requires some-interceptor :another-thing))
+(def handler (pedestal-interceptor/interceptor something))
+
+(defroutes routes
+  [[["/something" ^:interceptors [second-interceptor]
+     ["/another" ^:interceptors [first-interceptor]
+      {:get handler}]]]])
+
+(deftest satisfy-routes-test
+
+  (testing "reorders interceptors within routes to put requires after the appropriate provides"
+
+    (is (= [first-interceptor
+            second-interceptor]
+
+           (->> (angel/satisfy {:io.pedestal.http/routes routes})
+                :io.pedestal.http/routes first :interceptors (take 2))))))

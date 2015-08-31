@@ -16,18 +16,27 @@
 
     (distinct (reduce (fn [c i]
                         (if-let [requirements (::requires i)]
-                          (concat c
-                                  (map (fn [r] (if-let [p (get providers r)]
-                                                 p
-                                                 (throw (Exception.
-                                                         (format
-                                                          "No interceptor provides %s to satisfy %s"
-                                                          r
-                                                          (:name i))))))
-                                       requirements)
-                                  [i])
+                          (into c
+                                (conj (mapv (fn [r] (if-let [p (get providers r)]
+                                                      p
+                                                      (throw (Exception.
+                                                              (format
+                                                               "No interceptor provides %s to satisfy %s"
+                                                               r
+                                                               (:name i))))))
+                                            requirements)
+                                      i))
                           (conj c i)))
                       [] interceptors))))
 
+(defn- reorder-route-interceptors [routes]
+  (map #(update % :interceptors reorder-interceptors) routes))
+
 (defn satisfy [service-map]
-  (update service-map :io.pedestal.http/interceptors reorder-interceptors))
+  (cond-> service-map
+
+    (:io.pedestal.http/interceptors service-map)
+    (update :io.pedestal.http/interceptors reorder-interceptors)
+
+    (:io.pedestal.http/routes service-map)
+    (update :io.pedestal.http/routes reorder-route-interceptors)))
