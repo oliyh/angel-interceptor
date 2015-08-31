@@ -83,7 +83,8 @@
 
       (is (thrown-with-msg?
            Exception #"No interceptor provides :something-else to satisfy :angel.interceptor-test/another-interceptor"
-           (angel/satisfy {:io.pedestal.http/interceptors [second-interceptor first-interceptor]})))))
+           (angel/satisfy {:io.pedestal.http/interceptors [second-interceptor first-interceptor]}
+                          :strict)))))
 
   (comment "todo"
            (testing "blows up if there is a dependency loop"
