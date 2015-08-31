@@ -50,9 +50,10 @@ In Pedestal the `rate-limiter` interceptor will run *before* the `slack-auth` or
 **Angel Interceptor** allows you to express a _provides_ and _requires_ relation between interceptors:
 
 ```clojure
-(require '[angel.interceptor :as angel])
+(require '[angel.interceptor :as angel]
+         '[io.pedestal.http.route.definition :refer [defroutes]])
 
-(def routes
+(defroutes routes
   ["/api" ^:interceptors [(angel/requires rate-limiter :account)]
     ["/slack" ^:interceptors [(angel/provides slack-auth :account)] ...]
     ["/hipchat" ^:interceptors [(angel/provides hipchat-auth :account)] ...]])
