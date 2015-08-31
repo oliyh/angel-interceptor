@@ -82,4 +82,13 @@
 
       (is (thrown-with-msg?
            Exception #"No interceptor provides :something-else to satisfy :angel.interceptor-test/another-interceptor"
-           (angel/satisfy {:io.pedestal.http/interceptors [second-interceptor first-interceptor]}))))))
+           (angel/satisfy {:io.pedestal.http/interceptors [second-interceptor first-interceptor]})))))
+
+  (comment "todo"
+           (testing "blows up if there is a dependency loop"
+             (let [first-interceptor (angel/requires (angel/provides some-interceptor :something) :something-else)
+                   second-interceptor (angel/requires (angel/provides another-interceptor :something-else) :something)]
+
+               (is (thrown-with-msg?
+                    Exception #"Requires/provides loop between \[:angel.interceptor-test/some-interceptor :angel.interceptor-test/another-interceptor\]"
+                    (angel/satisfy {:io.pedestal.http/interceptors [second-interceptor first-interceptor]})))))))
