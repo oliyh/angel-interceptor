@@ -1,6 +1,6 @@
 # angel-interceptor
 
-Express relations between Pedestal interceptors and decouple the scope of interceptors from execution order.
+Express relations between Pedestal interceptors and decouple scope from execution order.
 
 ```clojure
 (require '[angel.interceptor :as angel]
