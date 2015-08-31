@@ -4,16 +4,17 @@ Express relations between Pedestal interceptors and decouple the scope of interc
 
 ```clojure
 (require '[angel.interceptor :as angel]
-         '[io.pedestal.http :as bootstrap])
+         '[io.pedestal.http :as bootstrap]
+         '[io.pedestal.http.route.definition :refer [defroutes]])
+
+(defroutes routes
+  ["/api" ^:interceptors [(angel/requires rate-limiter :account)]
+    ["/slack" ^:interceptors [(angel/provides slack-auth :account)] ...]
+    ["/hipchat" ^:interceptors [(angel/provides hipchat-auth :account)] ...]])
 
 (def service
   (->
-    {::bootstrap/routes
-
-      ["/api" ^:interceptors [(angel/requires rate-limiter :account)]
-        ["/slack" ^:interceptors [(angel/provides slack-auth :account)] ...]
-        ["/hipchat" ^:interceptors [(angel/provides hipchat-auth :account)] ...]]}
-
+    {::bootstrap/routes routes}
     bootstrap/default-interceptors
     angel/satisfy))
 ```
@@ -33,9 +34,12 @@ Imagine you are building an API for integration with multiple chat services.
 You would naturally put `slack-auth` and `hipchat-auth` as interceptors on the appropriate route branches, as below.
 
 ```clojure
-["/api" ^:interceptors [rate-limiter]
-  ["/slack" ^:interceptors [slack-auth] ...]
-  ["/hipchat" ^:interceptors [hipchat-auth] ...]]
+(require '[io.pedestal.http.route.definition :refer [defroutes]])
+
+(defroutes routes
+  ["/api" ^:interceptors [rate-limiter]
+    ["/slack" ^:interceptors [slack-auth] ...]
+    ["/hipchat" ^:interceptors [hipchat-auth] ...]])
 ```
 
 You want to limit the number of times each account can use your API, so you add an interceptor - `rate-limiter` - which applies to all routes in the API.
@@ -58,11 +62,9 @@ In Pedestal the `rate-limiter` interceptor will run *before* the `slack-auth` or
 To do this, simply run `angel/satisfy` over the service map:
 
 ```clojure
-(require '[io.pedestal.http :as bootstrap])
-
 (def service
   (angel/satisfy
-    {::bootstrap/routes routes}))
+    {:io.pedestal.http/routes routes}))
 ```
 
 ## Bugs
