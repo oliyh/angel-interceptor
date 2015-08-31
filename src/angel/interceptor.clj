@@ -10,16 +10,22 @@
 
 
 (defn- reorder-interceptors [interceptors]
-  (let [provides (reduce (fn [m i] (if-let [p (::provides i)]
+  (let [providers (reduce (fn [m i] (if-let [p (::provides i)]
                                      (into m (zipmap p (repeat i)))
                                      m)) {} interceptors)]
 
-    (clojure.pprint/pprint provides)
-
     (distinct (reduce (fn [c i]
-                        (if-let [r (::requires i)]
-                          (do (println "requirement for" r)
-                            (concat c (map provides r) [i]))
+                        (if-let [requirements (::requires i)]
+                          (concat c
+                                  (map (fn [r] (if-let [p (get providers r)]
+                                                 p
+                                                 (throw (Exception.
+                                                         (format
+                                                          "No interceptor provides %s to satisfy %s"
+                                                          r
+                                                          (:name i))))))
+                                       requirements)
+                                  [i])
                           (conj c i)))
                       [] interceptors))))
 

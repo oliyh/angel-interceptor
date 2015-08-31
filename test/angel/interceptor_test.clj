@@ -74,4 +74,12 @@
              (angel/satisfy {:io.pedestal.http/interceptors [second-interceptor third-interceptor first-interceptor]})))
 
       (is (= {:io.pedestal.http/interceptors [first-interceptor third-interceptor second-interceptor]}
-             (angel/satisfy {:io.pedestal.http/interceptors [third-interceptor second-interceptor first-interceptor]}))))))
+             (angel/satisfy {:io.pedestal.http/interceptors [third-interceptor second-interceptor first-interceptor]})))))
+
+  (testing "blows up if dependency can't be satisfied"
+    (let [first-interceptor (angel/provides some-interceptor :something)
+          second-interceptor (angel/requires another-interceptor :something-else)]
+
+      (is (thrown-with-msg?
+           Exception #"No interceptor provides :something-else to satisfy :angel.interceptor-test/another-interceptor"
+           (angel/satisfy {:io.pedestal.http/interceptors [second-interceptor first-interceptor]}))))))
