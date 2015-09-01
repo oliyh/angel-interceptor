@@ -4,34 +4,38 @@
    [io.pedestal.interceptor :as pedestal-interceptor]))
 
 (defn requires [interceptor & requirements]
-  (assoc interceptor
-         ::requires (set requirements)
-         ::strict? true))
+  (vary-meta interceptor
+             assoc
+             ::requires (set requirements)
+             ::strict? true))
 
 (defn prefers [interceptor & requirements]
-  (assoc interceptor
-         ::requires (set requirements)
-         ::strict? false))
+  (vary-meta interceptor
+             assoc
+             ::requires (set requirements)
+             ::strict? false))
 
 (defn provides [interceptor & provisions]
-  (assoc interceptor ::provides (set provisions)))
+  (vary-meta interceptor
+             assoc
+             ::provides (set provisions)))
 
 
 (defn- reorder-interceptors [interceptors]
-  (let [providers (reduce (fn [m i] (if-let [p (::provides i)]
+  (let [providers (reduce (fn [m i] (if-let [p (-> i meta ::provides)]
                                       (into m (zipmap p (repeat i)))
                                       m)) {} interceptors)]
 
     (->> interceptors
          (reduce
           (fn [c i]
-            (if-let [requirements (::requires i)]
+            (if-let [requirements (-> i meta ::requires)]
               (into c
                     (conj
                      (->> requirements
                           (mapv (fn [r] (if-let [p (get providers r)]
                                           p
-                                          (when (::strict? i)
+                                          (when (-> i meta ::strict?)
                                             (throw (Exception.
                                                     (format
                                                      "No interceptor provides %s to satisfy %s"
@@ -61,5 +65,5 @@
     (update :io.pedestal.http/routes
             (fn [routes]
               (cond
-                (seq? routes) (reorder-route-interceptors routes)
-                (fn? routes) #(reorder-route-interceptors (routes)))))))
+                (fn? routes) #(reorder-route-interceptors (routes))
+                (seq routes) (reorder-route-interceptors routes))))))

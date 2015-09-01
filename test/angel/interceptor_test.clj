@@ -12,40 +12,34 @@
 
 (deftest requires-test
   (testing "works on plain map"
-    (is (= {:enter something
-            ::angel/requires #{:authentication :authorisation}
+    (is (= {::angel/requires #{:authentication :authorisation}
             ::angel/strict? true}
-           (angel/requires {:enter something} :authentication :authorisation))))
+           (meta (angel/requires {:enter something} :authentication :authorisation)))))
 
   (testing "works on something that's already an interceptor"
-    (is (= (pedestal-interceptor/interceptor {:enter something
-                                              ::angel/requires #{:authentication :authorisation}
-                                              ::angel/strict? true})
-           (angel/requires (before something) :authentication :authorisation)))))
+    (is (= {::angel/requires #{:authentication :authorisation}
+            ::angel/strict? true}
+           (meta (angel/requires (before something) :authentication :authorisation))))))
 
 (deftest prefers-test
   (testing "works on plain map"
-    (is (= {:enter something
-            ::angel/requires #{:authentication :authorisation}
+    (is (= {::angel/requires #{:authentication :authorisation}
             ::angel/strict? false}
-           (angel/prefers {:enter something} :authentication :authorisation))))
+           (meta (angel/prefers {:enter something} :authentication :authorisation)))))
 
   (testing "works on something that's already an interceptor"
-    (is (= (pedestal-interceptor/interceptor {:enter something
-                                              ::angel/requires #{:authentication :authorisation}
-                                              ::angel/strict? false})
-           (angel/prefers (before something) :authentication :authorisation)))))
+    (is (= {::angel/requires #{:authentication :authorisation}
+            ::angel/strict? false}
+           (meta (angel/prefers (before something) :authentication :authorisation))))))
 
 (deftest provides-test
   (testing "works on plain map"
-    (is (= {:enter something
-            ::angel/provides #{:authentication :authorisation}}
-           (angel/provides {:enter something} :authentication :authorisation))))
+    (is (= {::angel/provides #{:authentication :authorisation}}
+           (meta (angel/provides {:enter something} :authentication :authorisation)))))
 
   (testing "works on something that's already an interceptor"
-    (is (= (pedestal-interceptor/interceptor {:enter something
-                                              ::angel/provides #{:authentication :authorisation}})
-           (angel/provides (before something) :authentication :authorisation)))))
+    (is (= {::angel/provides #{:authentication :authorisation}}
+           (meta (angel/provides (before something) :authentication :authorisation))))))
 
 
 (deftest satisfy-test
