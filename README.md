@@ -15,8 +15,8 @@ Express relations between Pedestal interceptors and decouple scope from executio
 (def service
   (->
     {::bootstrap/routes routes}
-    bootstrap/default-interceptors
-    angel/satisfy))
+    angel/satisfy
+    bootstrap/default-interceptors))
 ```
 
 `rate-limiter` will run *after* `slack-auth` or `hipchat-auth` but still run *before* the handler.
