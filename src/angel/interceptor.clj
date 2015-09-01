@@ -49,9 +49,7 @@
   (mapv #(try (update % :interceptors reorder-interceptors)
               (catch Exception e
                 (throw (Exception. (str "Route" (pr-str %)) e))))
-        (cond
-          (seq? routes) routes
-          (fn? routes) (routes))))
+        routes))
 
 (defn satisfy [service-map]
   (cond-> service-map
@@ -60,4 +58,8 @@
     (update :io.pedestal.http/interceptors reorder-interceptors)
 
     (:io.pedestal.http/routes service-map)
-    (update :io.pedestal.http/routes reorder-route-interceptors)))
+    (update :io.pedestal.http/routes
+            (fn [routes]
+              (cond
+                (seq? routes) (reorder-route-interceptors routes)
+                (fn? routes) #(reorder-route-interceptors (routes)))))))
