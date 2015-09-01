@@ -12,19 +12,34 @@
 
 (deftest requires-test
   (testing "works on plain map"
-    (is (= (pedestal-interceptor/interceptor {:enter something
-                                              ::angel/requires #{:authentication :authorisation}})
+    (is (= {:enter something
+            ::angel/requires #{:authentication :authorisation}
+            ::angel/strict? true}
            (angel/requires {:enter something} :authentication :authorisation))))
 
   (testing "works on something that's already an interceptor"
     (is (= (pedestal-interceptor/interceptor {:enter something
-                                              ::angel/requires #{:authentication :authorisation}})
+                                              ::angel/requires #{:authentication :authorisation}
+                                              ::angel/strict? true})
            (angel/requires (before something) :authentication :authorisation)))))
+
+(deftest prefers-test
+  (testing "works on plain map"
+    (is (= {:enter something
+            ::angel/requires #{:authentication :authorisation}
+            ::angel/strict? false}
+           (angel/prefers {:enter something} :authentication :authorisation))))
+
+  (testing "works on something that's already an interceptor"
+    (is (= (pedestal-interceptor/interceptor {:enter something
+                                              ::angel/requires #{:authentication :authorisation}
+                                              ::angel/strict? false})
+           (angel/prefers (before something) :authentication :authorisation)))))
 
 (deftest provides-test
   (testing "works on plain map"
-    (is (= (pedestal-interceptor/interceptor {:enter something
-                                              ::angel/provides #{:authentication :authorisation}})
+    (is (= {:enter something
+            ::angel/provides #{:authentication :authorisation}}
            (angel/provides {:enter something} :authentication :authorisation))))
 
   (testing "works on something that's already an interceptor"
@@ -83,8 +98,7 @@
 
       (is (thrown-with-msg?
            Exception #"No interceptor provides :something-else to satisfy :angel.interceptor-test/another-interceptor"
-           (angel/satisfy {:io.pedestal.http/interceptors [second-interceptor first-interceptor]}
-                          :strict)))))
+           (angel/satisfy {:io.pedestal.http/interceptors [second-interceptor first-interceptor]})))))
 
   (comment "todo"
            (testing "blows up if there is a dependency loop"
