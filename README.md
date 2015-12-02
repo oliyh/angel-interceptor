@@ -1,5 +1,7 @@
 # angel-interceptor
 
+[![Clojars Project](http://clojars.org/angel-interceptor/latest-version.svg)](http://clojars.org/angel-interceptor)
+
 Express relations between Pedestal interceptors and decouple scope from execution order.
 
 ```clojure
