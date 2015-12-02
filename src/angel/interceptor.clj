@@ -1,7 +1,5 @@
 (ns angel.interceptor
-  (:refer-clojure :exclude [prefers])
-  (:require ;;[io.pedestal.http :as bootstrap]
-   [io.pedestal.interceptor :as pedestal-interceptor]))
+  (:refer-clojure :exclude [prefers]))
 
 (defn requires
   "Specifies that the interceptor requires certain values to be provided

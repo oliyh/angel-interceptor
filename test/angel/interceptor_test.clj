@@ -1,9 +1,9 @@
 (ns angel.interceptor-test
-  (:require [clojure.test :refer :all]
-            [angel.interceptor :as angel]
+  (:require [angel.interceptor :as angel]
+            [clojure.test :refer :all]
+            [io.pedestal.http.route.definition :refer [defroutes]]
             [io.pedestal.interceptor :as pedestal-interceptor]
-            [io.pedestal.interceptor.helpers :refer [before]]
-            [io.pedestal.http.route.definition :refer [defroutes]]))
+            [io.pedestal.interceptor.helpers :refer [before]]))
 
 (defn- something [_] nil)
 (def ^:private some-interceptor (before ::some-interceptor something))
