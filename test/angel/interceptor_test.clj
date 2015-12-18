@@ -43,7 +43,6 @@
 
 
 (deftest satisfy-test
-
   (testing "leaves interceptors without requirements alone"
     (let [service-map {:io.pedestal.http/interceptors [some-interceptor another-interceptor]}]
       (is (= service-map
@@ -114,7 +113,6 @@
       {:get handler}]]]])
 
 (deftest satisfy-routes-test
-
   (testing "reorders interceptors within routes to put requires after the appropriate provides"
 
     (is (= [first-interceptor
@@ -122,3 +120,23 @@
 
            (->> (angel/satisfy {:io.pedestal.http/routes routes})
                 :io.pedestal.http/routes first :interceptors (take 2))))))
+
+(deftest conditional-test
+  (testing "removes interceptors that don't meet the conditions, leaves the rest alone"
+
+    (testing "using value predicates"
+      (let [always-interceptor (angel/conditional some-interceptor true)
+            never-interceptor (angel/conditional another-interceptor false)
+            universal-interceptor yet-another-interceptor]
+
+        (is (= {:io.pedestal.http/interceptors [always-interceptor universal-interceptor]}
+               (angel/satisfy {:io.pedestal.http/interceptors [always-interceptor never-interceptor universal-interceptor]})))))
+
+    (testing "calling function predicates"
+      (let [prod? (constantly true)
+            prod-interceptor (angel/conditional some-interceptor prod?)
+            dev-interceptor (angel/conditional another-interceptor (complement prod?))
+            universal-interceptor yet-another-interceptor]
+
+        (is (= {:io.pedestal.http/interceptors [prod-interceptor universal-interceptor]}
+               (angel/satisfy {:io.pedestal.http/interceptors [prod-interceptor dev-interceptor universal-interceptor]})))))))

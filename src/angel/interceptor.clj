@@ -26,11 +26,27 @@
              assoc
              ::provides (set provisions)))
 
+(defn conditional
+  "Specifies that the interceptor is conditional on a predicate"
+  [interceptor predicate]
+  (vary-meta interceptor
+             assoc
+             ::conditional predicate))
+
 (defn- strict-assertion [requirement interceptor]
   (when (-> interceptor meta ::strict?)
     (throw (Exception. (format "No interceptor provides %s to satisfy %s"
                                requirement
                                (:name interceptor))))))
+
+(defn- remove-route-interceptors [interceptors]
+  (filter (fn [interceptor]
+            (let [pred (or (::conditional (meta interceptor))
+                           true)]
+              (cond
+                (fn? pred) (pred)
+                :else pred)))
+          interceptors))
 
 (defn- reorder-interceptors
   "Produces an interceptor chain where the interceptors which provide values
@@ -56,8 +72,10 @@
          distinct
          (into []))))
 
-(defn- reorder-route-interceptors [routes]
-  (mapv #(try (update % :interceptors reorder-interceptors)
+(def apply-rules (comp reorder-interceptors remove-route-interceptors))
+
+(defn- apply-route-rules [routes]
+  (mapv #(try (update % :interceptors apply-rules)
               (catch Exception e
                 (throw (Exception. (str "Route" (pr-str %)) e))))
         routes))
@@ -69,11 +87,11 @@
   (cond-> service-map
 
     (:io.pedestal.http/interceptors service-map)
-    (update :io.pedestal.http/interceptors reorder-interceptors)
+    (update :io.pedestal.http/interceptors apply-rules)
 
     (:io.pedestal.http/routes service-map)
     (update :io.pedestal.http/routes
             (fn [routes]
               (cond
-                (fn? routes) #(reorder-route-interceptors (routes))
-                (seq routes) (reorder-route-interceptors routes))))))
+                (fn? routes) #(apply-route-rules (routes))
+                (seq routes) (apply-route-rules routes))))))
