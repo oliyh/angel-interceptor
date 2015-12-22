@@ -117,7 +117,6 @@
 
     (is (= [first-interceptor
             second-interceptor]
-
            (->> (angel/satisfy {:io.pedestal.http/routes routes})
                 :io.pedestal.http/routes first :interceptors (take 2))))))
 
@@ -132,8 +131,8 @@
         (is (= {:io.pedestal.http/interceptors [always-interceptor universal-interceptor]}
                (angel/satisfy {:io.pedestal.http/interceptors [always-interceptor never-interceptor universal-interceptor]})))))
 
-    (testing "calling function predicates"
-      (let [prod? (constantly true)
+    (testing "calling nullary function predicates"
+      (let [prod? (fn [] true)
             prod-interceptor (angel/conditional some-interceptor prod?)
             dev-interceptor (angel/conditional another-interceptor (complement prod?))
             universal-interceptor yet-another-interceptor]

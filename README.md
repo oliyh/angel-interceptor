@@ -30,7 +30,7 @@ those defined at the service level and progressing on through those defined at r
 
 **Angel Interceptor** allows you to express relations between interceptors to gain maximum reuse without repetition.
 
-## Use case
+## Dependent Interceptors
 
 Imagine you are building an API for integration with multiple chat services.
 You would naturally put `slack-auth` and `hipchat-auth` as interceptors on the appropriate route branches, as below.
@@ -69,6 +69,26 @@ To do this, simply run `angel/satisfy` over the service map:
   (angel/satisfy
     {:io.pedestal.http/routes routes}))
 ```
+
+## Conditional Interceptors
+
+Sometimes interceptors may apply, or not apply, depending on some external factor e.g. you are running in a non-production
+environment. **Angel Interceptor** allows you to express predicates for including interceptors:
+
+```clojure
+(require '[angel.interceptor :as angel]
+         '[io.pedestal.http.route.definition :refer [defroutes]])
+
+(defn- prod? []
+  (= :prod (:env (get-settings))))
+
+(defroutes routes
+  ["/api" ^:interceptors [(angel/conditional rate-limiter prod?)]
+    ["/slack" ...]
+    ["/hipchat" ...]])
+```
+
+If the conditional evaluates to `false` the interceptor is removed from the chain when `angel/satisfy` is run.
 
 ## Bugs
 

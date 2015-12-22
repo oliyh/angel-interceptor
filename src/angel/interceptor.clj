@@ -41,9 +41,9 @@
 
 (defn- remove-route-interceptors [interceptors]
   (filter (fn [interceptor]
-            (let [pred (or (::conditional (meta interceptor))
-                           true)]
+            (let [pred (::conditional (meta interceptor))]
               (cond
+                (nil? pred) true
                 (fn? pred) (pred)
                 :else pred)))
           interceptors))
