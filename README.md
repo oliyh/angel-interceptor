@@ -3,22 +3,26 @@
 [![Clojars Project](http://clojars.org/angel-interceptor/latest-version.svg)](http://clojars.org/angel-interceptor)
 
 Express relations between Pedestal interceptors and decouple scope from execution order.
+Include or exclude interceptors based on predicates.
 
 ```clojure
 (require '[angel.interceptor :as angel]
          '[io.pedestal.http :as bootstrap]
          '[io.pedestal.http.route.definition :refer [defroutes]])
 
+(defn- not-prod? []
+  (not= :prod (:env (get-settings))))
+
 (defroutes routes
-  ["/api" ^:interceptors [(angel/requires rate-limiter :account)]
+  ["/api" ^:interceptors [(angel/requires rate-limiter :account)
+                          (angel/conditional show-stacktraces not-prod?)]
     ["/slack" ^:interceptors [(angel/provides slack-auth :account)] ...]
     ["/hipchat" ^:interceptors [(angel/provides hipchat-auth :account)] ...]])
 
 (def service
-  (->
-    {::bootstrap/routes routes}
-    angel/satisfy
-    bootstrap/default-interceptors))
+  (-> {::bootstrap/routes routes}
+      angel/satisfy
+      bootstrap/default-interceptors))
 ```
 
 `rate-limiter` will run *after* `slack-auth` or `hipchat-auth` but still run *before* the handler.
@@ -28,7 +32,8 @@ Express relations between Pedestal interceptors and decouple scope from executio
 Pedestal interceptors are applied sequentially in the order in which they are specified, starting with
 those defined at the service level and progressing on through those defined at route branch and finally route leaf level.
 
-**Angel Interceptor** allows you to express relations between interceptors to gain maximum reuse without repetition.
+**Angel Interceptor** allows you to express relations between interceptors and conditions of inclusion
+to gain maximum reuse without repetition.
 
 ## Dependent Interceptors
 
@@ -79,11 +84,11 @@ environment. **Angel Interceptor** allows you to express predicates for includin
 (require '[angel.interceptor :as angel]
          '[io.pedestal.http.route.definition :refer [defroutes]])
 
-(defn- prod? []
-  (= :prod (:env (get-settings))))
+(defn- not-prod? []
+  (not= :prod (:env (get-settings))))
 
 (defroutes routes
-  ["/api" ^:interceptors [(angel/conditional rate-limiter prod?)]
+  ["/api" ^:interceptors [(angel/conditional show-stacktraces not-prod?)]
     ["/slack" ...]
     ["/hipchat" ...]])
 ```
