@@ -1,4 +1,4 @@
-(defproject angel-interceptor "0.1.0"
+(defproject angel-interceptor "0.2.0"
   :description "Express dependencies for Pedestal interceptors"
   :url "https://github.com/oliyh/angel-interceptor"
   :license {:name "Eclipse Public License"
