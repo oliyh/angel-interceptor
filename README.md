@@ -5,6 +5,8 @@
 Express relations between Pedestal interceptors and decouple scope from execution order.
 Include or exclude interceptors based on predicates.
 
+Requires Pedestal 0.5.0 or greater.
+
 ```clojure
 (require '[angel.interceptor :as angel]
          '[io.pedestal.http :as bootstrap]
