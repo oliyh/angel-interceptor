@@ -97,6 +97,9 @@ environment. **Angel Interceptor** allows you to express predicates for includin
 
 If the conditional evaluates to `false` the interceptor is removed from the chain when `angel/satisfy` is run.
 
+## Build
+[![CircleCI](https://circleci.com/gh/oliyh/angel-interceptor.svg?style=svg)](https://circleci.com/gh/oliyh/angel-interceptor)
+
 ## Bugs
 
 Please raise issues or send pull requests on GitHub
