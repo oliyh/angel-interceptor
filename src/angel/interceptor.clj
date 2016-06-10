@@ -1,4 +1,6 @@
 (ns angel.interceptor
+  (:require [io.pedestal.http :as bootstrap]
+            [io.pedestal.http.route :as route])
   (:refer-clojure :exclude [prefers]))
 
 (defn requires
@@ -75,10 +77,10 @@
 (def apply-rules (comp reorder-interceptors remove-route-interceptors))
 
 (defn- apply-route-rules [routes]
-  (mapv #(try (update % :interceptors apply-rules)
-              (catch Exception e
-                (throw (Exception. (str "Route" (pr-str %)) e))))
-        routes))
+  (map #(try (update % :interceptors apply-rules)
+             (catch Exception e
+               (throw (Exception. (str "Route" (pr-str %)) e))))
+       routes))
 
 (defn satisfy
   "Given a pedestal service-map returns an updated map where dependencies between
@@ -86,12 +88,14 @@
   [service-map]
   (cond-> service-map
 
-    (:io.pedestal.http/interceptors service-map)
-    (update :io.pedestal.http/interceptors apply-rules)
+    (::bootstrap/interceptors service-map)
+    (update ::bootstrap/interceptors apply-rules)
 
-    (:io.pedestal.http/routes service-map)
-    (update :io.pedestal.http/routes
+    (::bootstrap/routes service-map)
+    (update ::bootstrap/routes
             (fn [routes]
-              (cond
-                (fn? routes) #(apply-route-rules (routes))
-                (seq routes) (apply-route-rules routes))))))
+              (cond-> routes
+                (satisfies? route/ExpandableRoutes routes) route/expand-routes
+
+                (fn? routes) ((fn [r] (apply-route-rules (r))))
+                (seq routes) apply-route-rules)))))

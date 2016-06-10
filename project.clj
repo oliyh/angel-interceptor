@@ -3,7 +3,8 @@
   :url "https://github.com/oliyh/angel-interceptor"
   :license {:name "Eclipse Public License"
             :url "http://www.eclipse.org/legal/epl-v10.html"}
-  :dependencies [[org.clojure/clojure "1.7.0"]]
   :target-path "target/%s"
-  :profiles {:uberjar {:aot :all}
-             :dev {:dependencies [[io.pedestal/pedestal.service "0.4.0"]]}})
+  :profiles {:provided {:dependencies [[org.clojure/clojure "1.8.0"]
+                                       [io.pedestal/pedestal.service "0.5.0"]
+                                       [javax.servlet/javax.servlet-api "3.1.0"]]}
+             :dev {:dependencies []}})
