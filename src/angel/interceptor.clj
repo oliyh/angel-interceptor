@@ -80,7 +80,9 @@
   (map #(try (update % :interceptors apply-rules)
              (catch Exception e
                (throw (Exception. (str "Route" (pr-str %)) e))))
-       routes))
+       (if (satisfies? route/ExpandableRoutes routes)
+         (route/expand-routes routes)
+         routes)))
 
 (defn satisfy
   "Given a pedestal service-map returns an updated map where dependencies between
@@ -94,8 +96,6 @@
     (::bootstrap/routes service-map)
     (update ::bootstrap/routes
             (fn [routes]
-              (cond-> routes
-                (satisfies? route/ExpandableRoutes routes) route/expand-routes
-
-                (fn? routes) ((fn [r] (apply-route-rules (r))))
-                (seq routes) apply-route-rules)))))
+              (cond
+                (fn? routes) (comp apply-route-rules routes)
+                (seq routes) (apply-route-rules routes))))))

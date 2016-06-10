@@ -115,11 +115,18 @@
 
 (deftest satisfy-routes-test
   (testing "reorders interceptors within routes to put requires after the appropriate provides"
-
     (is (= [first-interceptor
             second-interceptor]
            (->> (angel/satisfy {::bootstrap/routes routes})
-                ::bootstrap/routes first :interceptors (take 2))))))
+                ::bootstrap/routes first :interceptors (take 2)))))
+
+  (testing "delays reordering when a route function is provided"
+    (let [service-map (angel/satisfy {::bootstrap/routes (constantly routes)})
+          routes-fn (::bootstrap/routes service-map)]
+
+      (is (fn? routes-fn))
+      (is (= [first-interceptor second-interceptor]
+             (->> (routes-fn) first :interceptors (take 2)))))))
 
 (deftest conditional-test
   (testing "removes interceptors that don't meet the conditions, leaves the rest alone"
